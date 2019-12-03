@@ -11,8 +11,9 @@
     "categories": [
         "Other"
     ],
-    "activationEvents": [
-        "onCommand:extension.sayHello"
+    "activationEvents": [        
+        "onCommand:extension.genSqlVarsForSelection",
+        "onCommand:extension.genSqlVarsForFile"
     ],
     "main": "./extension",
     "contributes": {
@@ -20,6 +21,14 @@
             {
                 "command": "extension.sayHello",
                 "title": "Hello World"
+            },
+            {
+                "command": "extension.genSqlVarsForSelection",
+                "title": "Generate variable declarations for selection"
+            },
+            {
+                "command": "extension.genSqlVarsForFile",
+                "title": "Generate variable declarations for file"
             }
         ]
     },

@@ -13,33 +13,72 @@ const azdata = require('azdata');
 // your extension is activated the very first time the command is executed
 function activate(context) {
 
-    // Use the console to output diagnostic information (console.log) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
-    console.log('Congratulations, your extension "instantsqlvars" is now active!');
+    // // Use the console to output diagnostic information (console.log) and errors (console.error)
+    // // This line of code will only be executed once when your extension is activated
+    // console.log('Congratulations, your extension "instantsqlvars" is now active!');
 
-    // The command has been defined in the package.json file
-    // Now provide the implementation of the command with  registerCommand
-    // The commandId parameter must match the command field in package.json
-    let disposable = vscode.commands.registerCommand('extension.sayHello', function () {
-        // The code you place here will be executed every time your command is executed
+    function genInstantSqlVars(sql){
+        var instantSqlVars = "/* Instant SQL Variables */\r\n";
+        var lines = sql.split('\r\n');        
+        for(var i = 0; i < lines.length; i++){            
+            var currentLine = lines[i];
+            var elements = currentLine.split(' ');            
+            for(var j = 0; j < elements.length; j++){
+                var currentElement = elements[j];
+                
+                // If is a variable (e.g. @foo)
+                // If is not a variable declaration (E.g. DECLARE @foo)
+                if(currentElement[0] === '@' &&
+                    currentElement.toUpperCase().indexOf('DECLARE') == -1){
+                    // new variable
+                    instantSqlVars += `DECLARE ${currentElement} INT = 1 \r\n`
+                }
+            }            
+        }
 
-        // Display a message box to the user
-        vscode.window.showInformationMessage('Hello World - edited by Kurt!');
-    });
+        return instantSqlVars;
+    }
 
-    context.subscriptions.push(disposable);
+    // Extension method to generate block of SQL variables for current selection
+    let genInstantSqlVarsForSelection = vscode.commands.registerCommand('extension.genSqlVarsForSelection', function(){
+        var activeEditor = vscode.window.activeTextEditor;
+        // Nothing to do if there's no active editor
+        if(activeEditor === undefined){
+            return;
+        }
 
-    context.subscriptions.push(vscode.commands.registerCommand('extension.showCurrentConnection', () => {
-        // The code you place here will be executed every time your command is executed
+        var selectedSql = activeEditor.document.getText(activeEditor.selection);
+        var sqlWithInstantVars = genInstantSqlVars(selectedSql) + '\n' + selectedSql;
 
-        // Display a message box to the user
-        azdata.connection.getCurrentConnection().then(connection => {
-            let connectionId = connection ? connection.connectionId : 'No connection found!';
-            vscode.window.showInformationMessage(connectionId);
-        }, error => {
-             console.info(error);
+        activeEditor.edit(function(editBuilder){
+            editBuilder.replace(activeEditor.selection, sqlWithInstantVars);
         });
-    }));
+    });
+    context.subscriptions.push(genInstantSqlVarsForSelection);
+
+    // Extension method to generate block of SQL variables for entire file
+    let genInstantSqlVarsForFile = vscode.commands.registerCommand('extension.genSqlVarsForFile', function(){
+        var activeEditor = vscode.window.activeTextEditor;
+        // Nothing to do if there's no active editor
+        if(activeEditor === undefined){
+            return;
+        }
+
+        var documentSql = activeEditor.document.getText();
+        var sqlWithInstantVars = genInstantSqlVars(documentSql) + '\n' + documentSql;
+        activeEditor.edit(function(editBuilder){
+            // select all text in editor
+            var firstLine = activeEditor.document.lineAt(0);
+            var lastLine = activeEditor.document.lineAt(activeEditor.document.lineCount - 1);
+            var textRange = new vscode.Range(0, 
+                                            firstLine.range.start.character, 
+                                            activeEditor.document.lineCount - 1, 
+                                            lastLine.range.end.character);
+
+            editBuilder.replace(textRange, sqlWithInstantVars);
+        });
+    });
+    context.subscriptions.push(genInstantSqlVarsForFile);
 }
 exports.activate = activate;
 
