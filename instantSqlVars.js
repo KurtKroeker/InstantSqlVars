@@ -9,6 +9,13 @@ const vscode = require('vscode');
 // Note: uncomment when you want to use Azure Data Studio APIs. Commenting now to avoid strict linting issues
 const azdata = require('azdata');
 
+const codeRegex = new RegExp("code$", "i");
+const infoRegex = new RegExp("info$", "i");
+const nameRegex = new RegExp("name$", "i");
+const labelRegex = new RegExp("label$", "i");
+const dateRegex = new RegExp("date$|dt$", "i");
+const bitRegex = new RegExp("^@is", "i");
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 function activate(context) {
@@ -18,6 +25,13 @@ function activate(context) {
     // console.log('Congratulations, your extension "instantsqlvars" is now active!');
 
     function genInstantSqlVars(sql){
+
+        function sanitizeVariable(sqlVariable){
+            return sqlVariable
+                .replaceAll(",", "")
+                .trim();
+        }
+
         var instantSqlVars = "/* Instant SQL Variables */\r\n";
         var lines = sql.split('\r\n');        
         for(var i = 0; i < lines.length; i++){            
@@ -29,18 +43,39 @@ function activate(context) {
                 // If is a variable (e.g. @foo)
                 // If is not a variable declaration (E.g. DECLARE @foo)
                 if(currentElement[0] === '@' &&
-                    currentElement.toUpperCase().indexOf('DECLARE') == -1){
+                    currentElement.toUpperCase().indexOf('DECLARE') == -1)
+                {
+                    let variable = sanitizeVariable(currentElement);
+                    let dataType = "INT";
+                    let placeholder = "1";                    
+
+                    if(codeRegex.test(variable) 
+                        || infoRegex.test(variable)
+                        || nameRegex.test(variable)
+                        || labelRegex.test(variable)){
+                        dataType = "VARCHAR(MAX)";
+                        placeholder = "'myValue'";
+                    }
+                    else if(dateRegex.test(variable)){
+                        dataType = "DATETIME";
+                        placeholder = `'${new Date().toLocaleDateString('en-us', { year:"numeric", month:"numeric", day:"numeric"})}'`
+                    }
+                    else if(bitRegex.test(variable)){
+                        dataType = "BIT";
+                        placeholder = "'true'";
+                    }
+
                     // new variable
-                    instantSqlVars += `DECLARE ${currentElement} INT = 1 \r\n`
+                    instantSqlVars += `DECLARE ${variable} ${dataType} = ${placeholder} \r\n`
                 }
             }            
         }
 
         return instantSqlVars;
-    }
+    }    
 
     // Extension method to generate block of SQL variables for current selection
-    let genInstantSqlVarsForSelection = vscode.commands.registerCommand('extension.genSqlVarsForSelection', function(){
+    let genInstantSqlVarsForSelection = vscode.commands.registerCommand('instantSqlVars.genSqlVarsForSelection', function(){
         var activeEditor = vscode.window.activeTextEditor;
         // Nothing to do if there's no active editor
         if(activeEditor === undefined){
@@ -57,7 +92,7 @@ function activate(context) {
     context.subscriptions.push(genInstantSqlVarsForSelection);
 
     // Extension method to generate block of SQL variables for entire file
-    let genInstantSqlVarsForFile = vscode.commands.registerCommand('extension.genSqlVarsForFile', function(){
+    let genInstantSqlVarsForFile = vscode.commands.registerCommand('instantSqlVars.genSqlVarsForFile', function(){
         var activeEditor = vscode.window.activeTextEditor;
         // Nothing to do if there's no active editor
         if(activeEditor === undefined){

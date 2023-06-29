@@ -2,7 +2,7 @@
     "name": "instantsqlvars",
     "displayName": "InstantSqlVars",
     "description": "Instantly generate a block of declared variables from a SQL statement",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "publisher": "kurtkroeker",
     "repository": {
         "type": "github",
@@ -15,19 +15,18 @@
     "categories": [
         "Other"
     ],
-    "activationEvents": [        
-        "onCommand:extension.genSqlVarsForSelection",
-        "onCommand:extension.genSqlVarsForFile"
+    "main": "./instantSqlVars",
+    "activationEvents": [
+        "onLanguage:sql"
     ],
-    "main": "./extension",
     "contributes": {
         "commands": [
             {
-                "command": "extension.genSqlVarsForSelection",
+                "command": "instantSqlVars.genSqlVarsForSelection",
                 "title": "Generate variable declarations for selection"
             },
             {
-                "command": "extension.genSqlVarsForFile",
+                "command": "instantSqlVars.genSqlVarsForFile",
                 "title": "Generate variable declarations for file"
             }
         ]
@@ -37,11 +36,11 @@
         "test": "node ./node_modules/vscode/bin/test"
     },
     "devDependencies": {
-        "typescript": "^2.6.1",
-        "vscode": "^1.1.6",
-        "eslint": "^4.11.0",
-        "@types/node": "^7.0.43",
         "@types/mocha": "^2.2.42",
-        "azdata": "1.0.0"
+        "@types/node": "^7.0.43",
+        "azdata": "1.0.0",
+        "eslint": "^8.43.0",
+        "typescript": "^2.6.1",
+        "vscode": "^1.1.37"
     }
 }
