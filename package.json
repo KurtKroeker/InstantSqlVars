@@ -2,7 +2,7 @@
     "name": "instantsqlvars",
     "displayName": "InstantSqlVars",
     "description": "Instantly generate a block of declared variables from a SQL statement",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "publisher": "kurtkroeker",
     "repository": {
         "type": "github",

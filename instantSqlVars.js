@@ -29,6 +29,8 @@ function activate(context) {
         function sanitizeVariable(sqlVariable){
             return sqlVariable
                 .replaceAll(",", "")
+                .replaceAll(")", "")
+                .replaceAll("(", "")
                 .trim();
         }
 
